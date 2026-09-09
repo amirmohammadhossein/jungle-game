@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>جنگ جنگل - بازی خانوادگی</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<main id="authScreen" class="screen" aria-labelledby="authTitle">
+  <div class="jungle-vignette" aria-hidden="true"></div>
+  <section class="auth-card">
+    <h1 id="authTitle">جنگ جنگل</h1>
+    <p class="auth-sub">دیو جنگل نیاز به سرگرمی دارد, او انسان ها را در یک جنگل تاریک و مرطوب رها میکند و به آنها 5 تفنگ میدهد, حال چه کسی زنده میماند؟ ......  موفق باشید!</p>
+    <form id="authForm" novalidate>
+      <label for="username">نام کاربری</label>
+      <input id="username" name="username" type="text" autocomplete="username" required maxlength="20" />
+      <label for="password">رمز عبور</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="60" />
+      <div id="authError" class="auth-error" role="alert" aria-live="assertive"></div>
+      <button type="submit" id="authSubmit" class="btn-primary">ورود</button>
+    </form>
+    <button type="button" id="authToggle" class="link-btn">حساب نداری؟ اینجا بساز</button>
+  </section>
+</main>
+
+<main id="gameScreen" class="screen hidden" aria-label="صفحه‌ی بازی جنگ جنگل">
+  <canvas id="gameCanvas" tabindex="0" role="application" aria-label="محیط بازی، جنگل استوایی. برای اطلاعات صوتی از کلیدهای بازی استفاده کنید."></canvas>
+
+  <div id="topMessage" class="top-message" aria-hidden="true"></div>
+
+  <div class="hud-top">
+    <div class="health-panel">
+      <span class="health-label">سلامتی</span>
+      <div class="health-bar-track"><div id="healthBar" class="health-bar-fill"></div></div>
+      <span id="healthText" class="health-text">۱۰۰۰</span>
+    </div>
+    <div class="weapon-panel">
+      <span id="weaponName">شاتگان</span>
+      <span id="ammoText" class="ammo-text">2 / 10</span>
+    </div>
+  </div>
+
+  <div id="killFeed" class="kill-feed" aria-hidden="true"></div>
+
+  <div id="deathOverlay" class="death-overlay hidden">
+    <p id="deathMessage">کشته شدی!</p>
+    <button id="respawnBtn" class="btn-primary">زنده شو</button>
+  </div>
+
+  <div id="leaderboardPanel" class="dialog-panel hidden" role="dialog" aria-modal="true" aria-label="جدول امتیازات">
+    <h2 tabindex="-1">جدول امتیازات</h2>
+    <table id="leaderboardTable">
+      <thead><tr><th>بازیکن</th><th>کیل</th><th>مرگ</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button id="closeLeaderboard" class="btn-secondary">بستن (L)</button>
+  </div>
+
+  <div id="radarPanel" class="dialog-panel hidden" role="dialog" aria-modal="true" aria-label="لیست رادار">
+    <h2 tabindex="-1">لیست دشمنان</h2>
+    <div id="radarList" class="radar-list" role="menu"></div>
+    <button id="closeRadar" class="btn-secondary" style="margin-top: 15px;">بستن (T)</button>
+  </div>
+
+  <div id="weaponDrawer" class="dialog-panel hidden" role="dialog" aria-modal="true" aria-label="لیست اسلحه‌ها">
+    <h2 tabindex="-1">انتخاب اسلحه</h2>
+    <div class="radar-list">
+      <button class="radar-btn drawer-weapon-btn" data-weapon="0">1. شاتگان</button>
+      <button class="radar-btn drawer-weapon-btn" data-weapon="1">2. برنو</button>
+      <button class="radar-btn drawer-weapon-btn" data-weapon="2">3. اسنایپر</button>
+      <button class="radar-btn drawer-weapon-btn" data-weapon="3">4. ak48</button>
+      <button class="radar-btn drawer-weapon-btn" data-weapon="4">5. تیر و کمان</button>
+    </div>
+    <button id="closeWeaponDrawer" class="btn-secondary" style="margin-top: 15px;">بستن</button>
+  </div>
+
+  <div class="touch-controls" aria-hidden="false">
+    <div class="dpad" role="group" aria-label="حرکت">
+      <button class="dpad-btn dpad-up" data-move="up" aria-label="جلو">▲</button>
+      <button class="dpad-btn dpad-left" data-move="left" aria-label="چپ">◀</button>
+      <button class="dpad-btn dpad-right" data-move="right" aria-label="راست">▶</button>
+      <button class="dpad-btn dpad-down" data-move="down" aria-label="عقب">▼</button>
+    </div>
+    <div class="rotate-group" role="group">
+      <button id="rotateLeft" class="round-btn" aria-label="چرخش به چپ">↺ Q</button>
+      <button id="rotateRight" class="round-btn" aria-label="چرخش به راست">↻ E</button>
+    </div>
+    <div class="info-group" role="group">
+      <button id="btnHealth" class="mini-btn" aria-label="وضعیت سلامتی">H</button>
+      <button id="btnCoords" class="mini-btn" aria-label="مختصات نقشه">C</button>
+      <button id="btnFacing" class="mini-btn" aria-label="جهت صورت">F</button>
+      <button id="btnLeaderboard" class="mini-btn" aria-label="جدول امتیازات">L</button>
+      <button id="btnRadar" class="mini-btn" aria-label="رادار و یافتن دشمن">T</button>
+      <button id="btnLock" class="mini-btn" aria-label="ردیابی هدف قفل شده">W</button>
+    </div>
+    <div class="weapon-group" role="group">
+      <button id="btnOpenWeaponDrawer" class="round-btn" aria-label="انتخاب اسلحه">🔫</button>
+      <button id="btnAkToggle" class="round-btn hidden" aria-label="حالت رگبار">تک‌تیر</button>
+      <button id="btnReload" class="mini-btn" aria-label="پر کردن اسلحه (ریلود)">R</button>
+    </div>
+    <button id="btnShoot" class="shoot-btn" aria-label="شلیک">شلیک</button>
+  </div>
+
+  <button id="helpToggle" class="help-toggle" aria-label="راهنمای کلیدها">؟</button>
+  <div id="helpPanel" class="dialog-panel hidden" role="dialog" aria-modal="true">
+    <h2 tabindex="-1">راهنمای کلیدها</h2>
+    <ul>
+      <li>جهت‌نماها: حرکت</li>
+      <li>Q / E: چرخش</li>
+      <li>Ctrl: شلیک</li>
+      <li>T: باز کردن لیست رادار و انتخاب هدف</li>
+      <li>W: ردیابی هدف انتخاب شده</li>
+      <li>H: سلامتی | C: مختصات | F: جهت صورت</li>
+      <li>1 تا 5: انتخاب اسلحه | R: ریلود</li>
+      <li>A: اعلام صوتی وضعیت مهمات</li>
+      <li>Alt+R: تغییر حالت شلیک برای ak48</li>
+      <li>L: جدول امتیازات</li>
+    </ul>
+    <button id="closeHelp" class="btn-secondary">بستن</button>
+  </div>
+</main>
+
+<div id="ariaAssertive" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
+<div id="ariaPolite" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
